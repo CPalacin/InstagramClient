@@ -1,16 +1,41 @@
 package com.carlos.instagramclient;
 
+import android.app.Fragment;
+import android.app.FragmentManager;
+import android.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.Toolbar;
 import android.view.Menu;
-import android.view.MenuItem;
+import android.widget.TextView;
+
+import com.carlos.instagramclient.asset.Assets;
+import com.carlos.instagramclient.fragment.PhotoViewList;
 
 public class InstagramActivity extends AppCompatActivity {
+
+    public static final String TITLE = " InstaClient";
+    private Toolbar toolbar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_instagram);
+
+        toolbarCreation();
+        switchToPhotoViewer();
+    }
+
+    private void switchToPhotoViewer() {
+        PhotoViewList toDoListFragment = new PhotoViewList();
+        switchFragment(toDoListFragment);
+    }
+
+    private void switchFragment(Fragment fragment){
+        FragmentManager fm = getFragmentManager();
+        FragmentTransaction transaction = fm.beginTransaction();
+        transaction.replace(R.id.contentFragment, fragment);
+        transaction.commit();
     }
 
     @Override
@@ -20,18 +45,19 @@ public class InstagramActivity extends AppCompatActivity {
         return true;
     }
 
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
+    private void toolbarCreation() {
+        toolbar = (Toolbar) findViewById(R.id.app_bar);
+        toolbar.getMenu().clear();
+        setSupportActionBar(toolbar);
+        setToolbarTitle(TITLE);
+    }
 
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
+    private void setToolbarTitle(String title) {
+        if (toolbar != null) {
+            getSupportActionBar().setDisplayShowTitleEnabled(false);
+            TextView toolbarTitle = (TextView) toolbar.findViewById(R.id.toolbar_title);
+            Assets.setInstagramTitleFont(toolbarTitle, this);
+            toolbarTitle.setText(title);
         }
-
-        return super.onOptionsItemSelected(item);
     }
 }
