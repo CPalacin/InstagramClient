@@ -1,25 +1,28 @@
 package com.carlos.instagramclient.data;
 
-import java.util.Date;
 import java.util.List;
 
 public class Photo {
     private String photoUrl;
     private int height;
-    private Date date;
+    private long created;
     private int likes;
     private String user;
     private String userProfileImageUrl;
-    private List<String> comments;
+    private List<Comment> comments;
+    private String caption;
 
-    public Photo(String photoUrl, int height, Date date, int likes, String user, String userProfileImageUrl, List<String> comments) {
+
+
+    public Photo(String photoUrl, int height, long created, int likes, String user, String userProfileImageUrl, List<Comment> comments, String caption) {
         this.photoUrl = photoUrl;
         this.height = height;
-        this.date = date;
+        this.created = created;
         this.likes = likes;
         this.user = user;
         this.userProfileImageUrl = userProfileImageUrl;
         this.comments = comments;
+        this.caption = caption;
     }
 
     public String getPhotoUrl() {
@@ -30,8 +33,21 @@ public class Photo {
         return height;
     }
 
-    public Date getDate() {
-        return date;
+    public String getTime() {
+        long now = System.currentTimeMillis()/1000;
+        long timeDiff = now - created;
+
+        String time = null;
+        if(timeDiff < 60){
+            time = (timeDiff) + "s";
+        }else if (timeDiff / 60 < 60){
+            time = (timeDiff / 60) + "m";
+        }else if (timeDiff / (60 * 60) < 24) {
+            time = (timeDiff / (60 * 60)) + "h";
+        }else{ // And so on..
+            time = (timeDiff / (60 * 60 * 24)) + "d";
+        }
+        return (timeDiff < 0)? "0s" : time;
     }
 
     public int getLikes() {
@@ -46,8 +62,12 @@ public class Photo {
         return userProfileImageUrl;
     }
 
-    public List<String> getComments() {
+    public List<Comment> getComments() {
         return comments;
+    }
+
+    public String getCaption() {
+        return caption;
     }
 
     @Override
@@ -55,7 +75,7 @@ public class Photo {
         return "Photo{" +
                 "photoUrl='" + photoUrl + '\'' +
                 ", height=" + height +
-                ", date=" + date +
+                ", created=" + created +
                 ", likes=" + likes +
                 ", user='" + user + '\'' +
                 ", userProfileImageUrl='" + userProfileImageUrl + '\'' +

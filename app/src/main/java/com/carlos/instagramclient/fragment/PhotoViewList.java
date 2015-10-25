@@ -1,15 +1,19 @@
 package com.carlos.instagramclient.fragment;
 
-import android.app.Fragment;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 
 import com.carlos.instagramclient.R;
+import com.carlos.instagramclient.adapter.PhotoViewAdapter;
+import com.carlos.instagramclient.data.Comment;
 import com.carlos.instagramclient.data.Photo;
 import com.loopj.android.http.AsyncHttpClient;
 import com.loopj.android.http.JsonHttpResponseHandler;
@@ -19,19 +23,40 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 import cz.msebera.android.httpclient.Header;
 
-public class PhotoViewList extends Fragment{
+public class PhotoViewList implements AdapterView.OnItemClickListener extends Fragment{
     public static final String POPULAR_URL = "https://api.instagram.com/v1/media/popular?client_id=";
     public static final String CLIENT_ID = "6b6289cb87ae492d84abd9a2e3793bd6";
+    private static final int NUM_COMMENTS = 2;
+
+    private  List<Photo> instagramPhotos = new ArrayList();
+    private PhotoViewAdapter adapter;
+    private SwipeRefreshLayout swipeContainer;
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         super.onCreateView(inflater, container, savedInstanceState);
         View rootView = inflater.inflate(R.layout.fragment_photo_view, container, false);
+
+
+
+        swipeContainer = (SwipeRefreshLayout) rootView.findViewById(R.id.swipeContainer);
+        swipeContainer.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                // Your code to refresh the list here.
+                // Make sure you call swipeContainer.setRefreshing(false)
+                // once the network request has completed successfully.
+                fetchPopularPhotos();
+            }
+        });
+        // Configure the refreshing colors
+        swipeContainer.setColorSchemeResources(R.color.primaryColor);
+
 
         // Retrieving the RecyclerView from the fragment layout
         RecyclerView rv = (RecyclerView) rootView.findViewById(R.id.rv);
@@ -42,6 +67,10 @@ public class PhotoViewList extends Fragment{
 
         // Fetching new photos
         fetchPopularPhotos();
+
+        adapter = new PhotoViewAdapter(instagramPhotos, getActivity());
+        rv.setAdapter(adapter);
+
         return rootView;
     }
 
@@ -52,6 +81,7 @@ public class PhotoViewList extends Fragment{
             public void onSuccess(int statusCode, Header[] headers, JSONObject response) {
 
                 try {
+                    instagramPhotos.clear();
                     JSONArray photosJSON = response.getJSONArray("data");
                     for (int i = 0; i < photosJSON.length(); i++) {
                         JSONObject photoJSON = photosJSON.getJSONObject(i);
@@ -61,30 +91,66 @@ public class PhotoViewList extends Fragment{
 
                         String photoUrl = standardRes.getString("url");
                         int height = standardRes.getInt("height");
-                        Date created = new Date(photoJSON.getLong("created_time"));
+                        long created = photoJSON.getLong("created_time");
 
                         JSONObject user = photoJSON.getJSONObject("user");
                         int likes = photoJSON.getJSONObject("likes").getInt("count");
                         String userName = user.getString("username");
                         String profilePicture = user.getString("profile_picture");
+
                         JSONArray comments = photoJSON.getJSONObject("comments").getJSONArray("data");
-                        List<String> commentList = new ArrayList<String>(comments.length());
-                        for (int j = comments.length()-1; j >= 0; j--) {
-                            JSONObject comment = comments.getJSONObject(j);
-                            commentList.add(comment.getString("text"));
+
+                        List<Comment> commentList = new ArrayList<Comment>();
+
+                        String caption = null;
+                        if(!photoJSON.isNull("caption")) {
+                            caption = photoJSON.getJSONObject("caption").getString("text");
+                            Comment comment = new Comment(userName, caption);
+                            commentList.add(comment);
                         }
 
-                        Photo photo = new Photo(photoUrl, height, created, likes, userName, profilePicture, commentList);
-                        Log.i("PHOTO", "photo: " + photo);
+                        commentList.addAll(getComments(comments, NUM_COMMENTS));
+
+                        if(comments.length() > NUM_COMMENTS){
+                            String numComments =  photoJSON.getJSONObject("comments").getString("count");
+                            Comment comment = new Comment(null, "View all "+numComments+" comments");
+                            commentList.add(comment);
+                        }
+
+                        Photo photo = new Photo(photoUrl, height, created, likes, userName,
+                                profilePicture, commentList, caption);
+                        instagramPhotos.add(photo);
                     }
+                    swipeContainer.setRefreshing(false);
+
                 }catch(JSONException e){
                     Log.e("ERROR", "Error parsing JSON", e);
                 }
-            }
 
-            @Override
-            public void onFailure(int statusCode, Header[] headers, String responseString, Throwable throwable) {
+                adapter.notifyDataSetChanged();
             }
         });
     }
+
+    @NonNull
+    private List<Comment> getComments(JSONArray comments, int numComments) throws JSONException {
+        List<Comment> commentList = new ArrayList<>(numComments);
+        int max = (numComments > comments.length())?comments.length():numComments;
+        for (int j = 0; j < max; j++) {
+            JSONObject jsonComment = comments.getJSONObject(j);
+            String user = jsonComment.getJSONObject("from").getString("username");
+            String text = jsonComment.getString("text");
+            Comment comment = new Comment(user, text);
+            commentList.add(comment);
+        }
+        return commentList;
+    }
+
+
+    @Override
+    public void onClick(View v) {
+        commentListListener.commentList(String id)
+    }
+
+
 }
