@@ -7,12 +7,15 @@ import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
+import android.view.MenuItem;
 import android.widget.TextView;
 
+import com.carlos.instagramclient.adapter.PhotoViewAdapter;
 import com.carlos.instagramclient.asset.Assets;
+import com.carlos.instagramclient.fragment.CommentList;
 import com.carlos.instagramclient.fragment.PhotoViewList;
 
-public class InstagramActivity extends AppCompatActivity {
+public class InstagramActivity extends AppCompatActivity implements PhotoViewAdapter.ViewCommentsListener {
 
     public static final String TITLE = " InstaClient";
     private Toolbar toolbar;
@@ -27,15 +30,28 @@ public class InstagramActivity extends AppCompatActivity {
     }
 
     private void switchToPhotoViewer() {
-        PhotoViewList toDoListFragment = new PhotoViewList();
-        switchFragment(toDoListFragment);
+        PhotoViewList photoViewList = new PhotoViewList();
+        photoViewList.setViewCommentListener(this);
+        switchFragment(photoViewList);
+    }
+
+    private void switchToCommentList(String id) {
+        setHomeButtonVisibility(true);
+        CommentList commentList = CommentList.newInstance(id);
+        switchFragment(commentList);
     }
 
     private void switchFragment(Fragment fragment){
         FragmentManager fm = getFragmentManager();
         FragmentTransaction transaction = fm.beginTransaction();
         transaction.replace(R.id.contentFragment, fragment);
+        transaction.addToBackStack(null);
         transaction.commit();
+    }
+
+    public void setHomeButtonVisibility(boolean visibility) {
+        getSupportActionBar().setHomeButtonEnabled(visibility);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(visibility);
     }
 
     @Override
@@ -59,5 +75,22 @@ public class InstagramActivity extends AppCompatActivity {
             Assets.setInstagramTitleFont(toolbarTitle, this);
             toolbarTitle.setText(title);
         }
+    }
+
+    @Override
+    public void viewComments(String id) {
+        switchToCommentList(id);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int id = item.getItemId();
+
+        if (id == android.R.id.home) {
+            getFragmentManager().popBackStack();
+        }
+
+        setHomeButtonVisibility(false);
+        return super.onOptionsItemSelected(item);
     }
 }

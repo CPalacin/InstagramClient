@@ -15,7 +15,6 @@ public class Comment {
         this.comment = comment;
     }
 
-
     public String getComment(String colorCode) {
         String finalComment = null;
         if(user != null){

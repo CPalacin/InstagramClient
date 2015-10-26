@@ -1,5 +1,6 @@
 package com.carlos.instagramclient.fragment;
 
+import android.app.Fragment;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v4.widget.SwipeRefreshLayout;
@@ -27,7 +28,7 @@ import java.util.List;
 
 import cz.msebera.android.httpclient.Header;
 
-public class PhotoViewList implements AdapterView.OnItemClickListener extends Fragment{
+public class PhotoViewList extends Fragment {
     public static final String POPULAR_URL = "https://api.instagram.com/v1/media/popular?client_id=";
     public static final String CLIENT_ID = "6b6289cb87ae492d84abd9a2e3793bd6";
     private static final int NUM_COMMENTS = 2;
@@ -35,6 +36,7 @@ public class PhotoViewList implements AdapterView.OnItemClickListener extends Fr
     private  List<Photo> instagramPhotos = new ArrayList();
     private PhotoViewAdapter adapter;
     private SwipeRefreshLayout swipeContainer;
+    private PhotoViewAdapter.ViewCommentsListener viewCommentListener;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -66,13 +68,20 @@ public class PhotoViewList implements AdapterView.OnItemClickListener extends Fr
         rv.setLayoutManager(linearLayoutManager);
 
         // Fetching new photos
-        fetchPopularPhotos();
+        if(instagramPhotos.isEmpty()) {
+            fetchPopularPhotos();
+        }
 
-        adapter = new PhotoViewAdapter(instagramPhotos, getActivity());
+        adapter = new PhotoViewAdapter(instagramPhotos, getActivity(), viewCommentListener);
         rv.setAdapter(adapter);
 
         return rootView;
     }
+
+    public void setViewCommentListener(PhotoViewAdapter.ViewCommentsListener viewCommentListener) {
+        this.viewCommentListener = viewCommentListener;
+    }
+
 
     private void fetchPopularPhotos() {
         AsyncHttpClient client = new AsyncHttpClient();
@@ -86,11 +95,21 @@ public class PhotoViewList implements AdapterView.OnItemClickListener extends Fr
                     for (int i = 0; i < photosJSON.length(); i++) {
                         JSONObject photoJSON = photosJSON.getJSONObject(i);
 
-                        JSONObject standardRes = photoJSON.getJSONObject("images")
-                                                          .getJSONObject("standard_resolution");
+                        String id = photoJSON.getString("id");
 
-                        String photoUrl = standardRes.getString("url");
-                        int height = standardRes.getInt("height");
+                        boolean isVideo = photoJSON.getString("type").equalsIgnoreCase("video");
+                        String photoUrl = null;
+                        if(isVideo){
+                            JSONObject standardRes = photoJSON.getJSONObject("videos")
+                                    .getJSONObject("standard_resolution");
+
+                            photoUrl = standardRes.getString("url");
+                        }else{
+                            JSONObject standardRes = photoJSON.getJSONObject("images")
+                                    .getJSONObject("standard_resolution");
+
+                            photoUrl = standardRes.getString("url");
+                        }
                         long created = photoJSON.getLong("created_time");
 
                         JSONObject user = photoJSON.getJSONObject("user");
@@ -117,7 +136,7 @@ public class PhotoViewList implements AdapterView.OnItemClickListener extends Fr
                             commentList.add(comment);
                         }
 
-                        Photo photo = new Photo(photoUrl, height, created, likes, userName,
+                        Photo photo = new Photo(isVideo, id, photoUrl, created, likes, userName,
                                 profilePicture, commentList, caption);
                         instagramPhotos.add(photo);
                     }
@@ -145,12 +164,5 @@ public class PhotoViewList implements AdapterView.OnItemClickListener extends Fr
         }
         return commentList;
     }
-
-
-    @Override
-    public void onClick(View v) {
-        commentListListener.commentList(String id)
-    }
-
 
 }

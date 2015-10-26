@@ -3,20 +3,20 @@ package com.carlos.instagramclient.data;
 import java.util.List;
 
 public class Photo {
+    private boolean isVideo;
+    private String id;
     private String photoUrl;
-    private int height;
     private long created;
     private int likes;
     private String user;
     private String userProfileImageUrl;
-    private List<Comment> comments;
     private String caption;
+    private List<Comment> comments;
 
-
-
-    public Photo(String photoUrl, int height, long created, int likes, String user, String userProfileImageUrl, List<Comment> comments, String caption) {
+    public Photo(boolean isVideo, String id, String photoUrl, long created, int likes, String user, String userProfileImageUrl, List<Comment> comments, String caption) {
+        this.isVideo = isVideo;
+        this.id = id;
         this.photoUrl = photoUrl;
-        this.height = height;
         this.created = created;
         this.likes = likes;
         this.user = user;
@@ -25,12 +25,16 @@ public class Photo {
         this.caption = caption;
     }
 
-    public String getPhotoUrl() {
-        return photoUrl;
+    public boolean isVideo() {
+        return isVideo;
     }
 
-    public int getHeight() {
-        return height;
+    public String getId() {
+        return id;
+    }
+
+    public String getPhotoUrl() {
+        return photoUrl;
     }
 
     public String getTime() {
@@ -70,16 +74,4 @@ public class Photo {
         return caption;
     }
 
-    @Override
-    public String toString() {
-        return "Photo{" +
-                "photoUrl='" + photoUrl + '\'' +
-                ", height=" + height +
-                ", created=" + created +
-                ", likes=" + likes +
-                ", user='" + user + '\'' +
-                ", userProfileImageUrl='" + userProfileImageUrl + '\'' +
-                ", comments=" + comments +
-                '}';
-    }
 }

@@ -47,26 +47,13 @@ public class CommentsAdapter extends RecyclerView.Adapter<CommentsAdapter.Commen
         super.onAttachedToRecyclerView(recyclerView);
     }
 
-    public static class CommentHolder extends RecyclerView.ViewHolder implements OnClickListener{
+    public static class CommentHolder extends RecyclerView.ViewHolder {
         public TextView comment;
-        public CommentListListener commentListListener;
 
-        private CommentHolder(View itemView, CommentListListener commentListListener) {
+        private CommentHolder(View itemView) {
             super(itemView);
-            this.commentListListener = commentListListener;
             comment = (TextView)itemView.findViewById(R.id.comment);
-            itemView.setOnClickListener(this);
-        }
-
-        @Override
-        public void onClick(View v) {
-            commentListListener();
-        }
-
-        public interface CommentListListener{
-            public commentList();
         }
     }
-
 
 }
